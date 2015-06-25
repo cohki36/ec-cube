@@ -30,7 +30,7 @@
 BASE_DIR=${BASE_DIR:-$(cd $(dirname $0) && pwd)}
 CONFIG_DIR="${BASE_DIR}/app/config/eccube"
 DIST_DIR="${BASE_DIR}/src/Eccube/Resource/config"
-SQL_DIR="${BASE_DIR}/html/install/sql"
+SQL_DIR="${BASE_DIR}/src/Eccube/Resource/sql"
 
 # config.yml
 CONFIG_YML="${CONFIG_DIR}/config.yml"
@@ -70,7 +70,14 @@ export DBNAME=${DBNAME:-"cube3_dev"}
 export DBUSER=${DBUSER:-"cube3_dev_user"}
 export DBPASS=${DBPASS:-"password"}
 
+export MAIL_BACKEND=${MAILER_BACKEND:-"smtp"}
+export MAIL_HOST=${MAIL_HOST:-"localhost"}
+export MAIL_PORT=${MAIL_PORT:-"25"}
+export MAIL_USER=${MAIL_USER:-""}
+export MAIL_PASS=${MAIL_PASS:-""}
+
 DBTYPE=$1;
+GET_COMPOSER=$2;
 
 case "${DBTYPE}" in
 "pgsql" )
@@ -144,13 +151,13 @@ dtb_page_layout_page_id_seq
 dtb_payment_payment_id_seq
 dtb_product_class_product_class_id_seq
 dtb_product_product_id_seq
+dtb_product_stock_product_stock_id_seq
 dtb_review_review_id_seq
 dtb_send_history_send_id_seq
 dtb_shipping_shipping_id_seq
 dtb_shipment_item_item_id_seq
 dtb_mailmaga_template_template_id_seq
 dtb_plugin_plugin_id_seq
-dtb_plugin_hookpoint_plugin_hookpoint_id_seq
 dtb_api_config_api_config_id_seq
 dtb_api_account_api_account_id_seq
 dtb_tax_rule_tax_rule_id_seq
@@ -215,6 +222,8 @@ echo "update permissions..."
 echo "creating  ${CONFIG_YML}"
 render_config_template ${CONFIG_YML_DIST} > ${CONFIG_YML}
 
+echo  "eccube_install: 1" >> ${CONFIG_YML}
+
 echo "creating  ${DATABASE_YML}"
 render_config_template ${DATABASE_YML_DIST} > ${DATABASE_YML}
 
@@ -232,11 +241,18 @@ render_config_template ${PATH_YML_DIST} > ${PATH_YML}
 # Install Composer
 # ---------------------------------
 
+case "${GET_COMPOSER}" in
+"none" )
+echo "not get composer..."
+;;
+* )
 echo "get composer..."
 curl -sS https://getcomposer.org/installer | php
 
 echo "install composer..."
 php ./composer.phar install --dev --no-interaction
+;;
+esac
 
 # ---------------------------------
 # Setup Database

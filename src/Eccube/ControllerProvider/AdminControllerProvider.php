@@ -33,6 +33,11 @@ class AdminControllerProvider implements ControllerProviderInterface
     {
         $c = $app['controllers_factory'];
 
+        // 強制SSL
+        if ($app['config']['force_ssl'] == \Eccube\Common\Constant::ENABLED) {
+            $c->requireHttps();
+        }
+
         // root
         $c->match('/', '\Eccube\Controller\Admin\AdminController::index')->bind('admin_homepage');
 
@@ -45,7 +50,8 @@ class AdminControllerProvider implements ControllerProviderInterface
         $c->match('/product/page/{page_no}', '\Eccube\Controller\Admin\Product\ProductController::index')->assert('page_no', '\d+')->bind('admin_product_page');
         $c->match('/product/product/new', '\Eccube\Controller\Admin\Product\ProductController::edit')->bind('admin_product_product_new');
         $c->match('/product/product/{id}/edit', '\Eccube\Controller\Admin\Product\ProductController::edit')->assert('id', '\d+')->bind('admin_product_product_edit');
-        $c->match('/product/product/class/edit/{id}', '\Eccube\Controller\Admin\Product\ProductClassController::index')->assert('id', '\d+')->bind('admin_product_product_class_edit');
+        $c->match('/product/product/class/{id}', '\Eccube\Controller\Admin\Product\ProductClassController::index')->assert('id', '\d+')->bind('admin_product_product_class');
+        $c->post('/product/product/class/edit/{id}', '\Eccube\Controller\Admin\Product\ProductClassController::edit')->assert('id', '\d+')->bind('admin_product_product_class_edit');
         $c->post('/product/product/image/add', '\Eccube\Controller\Admin\Product\ProductController::addImage')->bind('admin_product_image_add');
 
         $c->match('/product/category', '\Eccube\Controller\Admin\Product\CategoryController::index')->bind('admin_product_category');
@@ -89,18 +95,27 @@ class AdminControllerProvider implements ControllerProviderInterface
         $c->match('/order/new', '\Eccube\Controller\Admin\Order\EditController::index')->bind('admin_order_new');
         $c->match('/order/{id}/edit', '\Eccube\Controller\Admin\Order\EditController::index')->assert('id', '\d+')->bind('admin_order_edit');
         $c->match('/order/{id}/delete', '\Eccube\Controller\Admin\Order\OrderController::delete')->assert('id', '\d+')->bind('admin_order_delete');
-        $c->match('/order/search/customer', '\Eccube\Controller\Admin\Order\EditController::searchCustomer')->bind('admin_order_search_customer');
-        $c->match('/order/search/customer/id', '\Eccube\Controller\Admin\Order\EditController::searchCustomerById')->bind('admin_order_search_customer_by_id');
-        $c->match('/order/search/product', '\Eccube\Controller\Admin\Order\EditController::searchProduct')->bind('admin_order_search_product');
+        $c->post('/order/search/customer', '\Eccube\Controller\Admin\Order\EditController::searchCustomer')->bind('admin_order_search_customer');
+        $c->post('/order/search/customer/id', '\Eccube\Controller\Admin\Order\EditController::searchCustomerById')->bind('admin_order_search_customer_by_id');
+        $c->post('/order/search/product', '\Eccube\Controller\Admin\Order\EditController::searchProduct')->bind('admin_order_search_product');
         $c->match('/order/search/product/id', '\Eccube\Controller\Admin\Order\EditController::searchProductById')->bind('admin_order_search_product_by_id');
 
         $c->match('/order/{id}/mail', '\Eccube\Controller\Admin\Order\MailController::index')->assert('id', '\d+')->bind('admin_order_mail');
-        $c->match('/order/mail/view/{sendId}', '\Eccube\Controller\Admin\Order\MailController::view')->assert('sendId', '\d+')->bind('admin_order_mail_view');
+        $c->match('/order/mail/mail_all', '\Eccube\Controller\Admin\Order\MailController::mailAll')->bind('admin_order_mail_all');
+        $c->match('/order/mail_complete', '\Eccube\Controller\Admin\Order\MailController::complete')->bind('admin_order_mail_complete');
+        $c->match('/order/mail/view', '\Eccube\Controller\Admin\Order\MailController::view')->bind('admin_order_mail_view');
 
         $c->match('/order/status', '\Eccube\Controller\Admin\Order\StatusController::index')->bind('admin_order_status_default');
         $c->match('/order/status/{statusId}', '\Eccube\Controller\Admin\Order\StatusController::index')->bind('admin_order_status');
 
         // content
+        $c->match('/content/', '\Eccube\Controller\Admin\Content\ContentsController::index')->bind('admin_content');
+        $c->match('/content/new', '\Eccube\Controller\Admin\Content\ContentsController::edit')->bind('admin_content_new');
+        $c->match('/content/{id}/edit', '\Eccube\Controller\Admin\Content\ContentsController::edit')->assert('id', '\d+')->bind('admin_content_edit');
+        $c->match('/content/{id}/delete', '\Eccube\Controller\Admin\Content\ContentsController::delete')->assert('id', '\d+')->bind('admin_content_delete');
+        $c->match('/content/{id}/up', '\Eccube\Controller\Admin\Content\ContentsController::up')->assert('id', '\d+')->bind('admin_content_up');
+        $c->match('/content/{id}/down', '\Eccube\Controller\Admin\Content\ContentsController::down')->assert('id', '\d+')->bind('admin_content_down');
+
         $c->match('/content/file_manager', '\Eccube\Controller\Admin\Content\FileController::index')->bind('admin_content_file');
         $c->match('/content/file_view', '\Eccube\Controller\Admin\Content\FileController::view')->bind('admin_content_file_view');
         $c->match('/content/css', '\Eccube\Controller\Admin\Content\CssController::index')->bind('admin_content_css');
@@ -160,14 +175,22 @@ class AdminControllerProvider implements ControllerProviderInterface
 
         // mail
         $c->match('/setting/shop/mail', '\Eccube\Controller\Admin\Setting\Shop\MailController::index')->bind('admin_setting_shop_mail');
-        $c->match('/setting/shop/mail/new', '\Eccube\Controller\Admin\Setting\Shop\MailController::index')->assert('id', '\d+')->bind('admin_setting_shop_mail_edit');
-        $c->match('/setting/shop/mail/{id}/edit', '\Eccube\Controller\Admin\Setting\Shop\MailController::index')->assert('id', '\d+')->bind('admin_setting_shop_mail_edit');
+        $c->match('/setting/shop/mail/{id}', '\Eccube\Controller\Admin\Setting\Shop\MailController::index')->assert('id', '\d+')->bind('admin_setting_shop_mail_edit');
 
         // customer_agreement
         $c->match('/setting/shop/customer_agreement/', '\Eccube\Controller\Admin\Setting\Shop\CustomerAgreementController::index')->bind('admin_setting_shop_customer_agreement');
 
         // system/system
         $c->match('/setting/system/system', '\Eccube\Controller\Admin\Setting\System\SystemController::index')->bind('admin_setting_system_system');
+
+        // system/plugin
+        $c->match('/setting/system/plugin', '\Eccube\Controller\Admin\Setting\System\PluginController::index')->bind('admin_setting_system_plugin_index');
+        $c->match('/setting/system/plugin/install', '\Eccube\Controller\Admin\Setting\System\PluginController::install')->bind('admin_setting_system_plugin_install');
+        $c->match('/setting/system/plugin/handler', '\Eccube\Controller\Admin\Setting\System\PluginController::handler')->bind('admin_setting_system_plugin_handler');
+        $c->match('/setting/system/plugin/manage', '\Eccube\Controller\Admin\Setting\System\PluginController::manage')->bind('admin_setting_system_plugin_manage');
+
+        $c->match('/setting/system/plugin/handler_up/{handlerId}', '\Eccube\Controller\Admin\Setting\System\PluginController::handler_up')->bind('admin_setting_system_plugin_handler_up');
+        $c->match('/setting/system/plugin/handler_down/{handlerId}', '\Eccube\Controller\Admin\Setting\System\PluginController::handler_down')->bind('admin_setting_system_plugin_handler_down');
 
         // system/member
         $c->match('/setting/system/member', '\Eccube\Controller\Admin\Setting\System\MemberController::index')->bind('admin_setting_system_member');
@@ -176,6 +199,10 @@ class AdminControllerProvider implements ControllerProviderInterface
         $c->match('/setting/system/member/{id}/delete', '\Eccube\Controller\Admin\Setting\System\MemberController::delete')->assert('id', '\d+')->bind('admin_setting_system_member_delete');
         $c->match('/setting/system/member/{id}/up', '\Eccube\Controller\Admin\Setting\System\MemberController::up')->assert('id', '\d+')->bind('admin_setting_system_member_up');
         $c->match('/setting/system/member/{id}/down', '\Eccube\Controller\Admin\Setting\System\MemberController::down')->assert('id', '\d+')->bind('admin_setting_system_member_down');
+
+        // system/security
+        $c->match('/setting/system/security', '\Eccube\Controller\Admin\Setting\System\SecurityController::index')->bind('admin_setting_system_security');
+
 
         // 未実装
         $c->match('/product/rank', '\Eccube\Page\Admin\Products\ProductRank')->bind('admin_product_product_rank');
@@ -195,7 +222,6 @@ class AdminControllerProvider implements ControllerProviderInterface
         $c->match('/order/pdf', '\Eccube\Page\Admin\Order\Pdf')->bind('admin_order_pdf');
         $c->match('/order/product_select', '\Eccube\Page\Admin\Order\ProductSelect')->bind('admin_order_product_select');
 
-        $c->match('/content', '\Eccube\Page\Admin\Content\Index')->bind('admin_content');
         $c->match('/content/recommend', '\Eccube\Page\Admin\Content\Recommend')->bind('admin_content_recommend');
         $c->match('/content/recommend_search', '\Eccube\Page\Admin\Content\RecommendSearch')->bind('admin_content_recommend_search');
         $c->match('/content/header', '\Eccube\Page\Admin\Design\Header')->bind('admin_design_header');

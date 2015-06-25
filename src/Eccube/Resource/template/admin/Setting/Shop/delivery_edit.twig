@@ -21,22 +21,25 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
 {% extends 'default_frame.twig' %}
 
+{% set menus = ['setting', 'shop', 'shop_delivery'] %}
+
 {% block title %}ショップ設定{% endblock %}
 {% block sub_title %}配送先管理{% endblock %}
 
-{% block javascript %}
-    $(function(){
-        $("#set_fee_all").on("click", function() {
-            var fee = $("#{{ form.free_all.vars.id }}").val();
-            $("input[name$='[fee]']").val(fee);
-        });
-    });
-{% endblock %}
-
 {% form_theme form 'Form/bootstrap_3_horizontal_layout.html.twig' %}
 
-{% block main %}
+{% block javascript %}
+<script>
+$(function(){
+    $("#set_fee_all").on("click", function() {
+        var fee = $("#{{ form.free_all.vars.id }}").val();
+        $("input[name$='[fee]']").val(fee);
+    });
+});
+</script>
+{% endblock javascript %}
 
+{% block main %}
     <form role="form" class="form-horizontal" name="form1" id="form1" method="post" action="">
         {{ form_widget(form._token) }}
         <div class="row" id="aside_wrap">
@@ -103,14 +106,14 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                         <div class="form-inline">
                             全国一律送料&nbsp; {{ form_widget(form.free_all) }}
                             <a class="btn-normal" href="javascript:;" id="set_fee_all">
-                                <button class="btn btn-default btn-sm" type="button">設定</button>
+                                <button class="btn btn-default btn-sm" type="button">各都道府県に反映</button>
                             </a>
                         </div>
                     </div><!-- /.box-header -->
-                    <div class="box-body toggle" style="position:relative;">
+                    <div class="box-body toggle active" style="position:relative;">
                         <h3 class="box-title">都道府県ごとに設定する<svg class="cb cb-angle-down icon_down"> <use xlink:href="#cb-angle-down" /></svg></h3>
                     </div>
-                    <div class="box-body accpanel">
+                    <div class="box-body accpanel" style="display: block;">
                         {% for child in form.delivery_fees %}
                             {% if loop.first %}
                                 <div class="form-group">

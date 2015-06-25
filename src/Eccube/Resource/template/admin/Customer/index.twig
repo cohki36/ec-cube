@@ -21,12 +21,15 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
 {% extends 'default_frame.twig' %}
 
+{% set menus = ['customer', 'customer_master'] %}
+
 {% block title %}会員管理{% endblock %}
 {% block sub_title %}会員マスター{% endblock %}
 
 {% form_theme searchForm 'Form/bootstrap_3_horizontal_layout.html.twig' %}
 
 {% block javascript %}
+<script>
 function fnChangeActionSubmit(action) {
     document.search_form.action = action;
     document.search_form.submit();
@@ -43,7 +46,8 @@ function fnReSendMail(action) {
         document.search_form.submit();
     }
 }
-{% endblock %}
+</script>
+{% endblock javascript %}
 
 {% block main %}
 <form name="search_form" id="search_form" method="post" action="">

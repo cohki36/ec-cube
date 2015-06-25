@@ -199,7 +199,7 @@ class ShoppingController extends AbstractController
                     $em->flush();
                     $em->close();
 
-                } catch (Exception $e) {
+                } catch (\Exception $e) {
                     $em->getConnection()->rollback();
                     $em->close();
                     return $app->redirect($app->url('shopping_error'));
@@ -582,7 +582,7 @@ class ShoppingController extends AbstractController
         if ($request->attributes->has(SecurityContext::AUTHENTICATION_ERROR)) {
             $error = $request->attributes->get(SecurityContext::AUTHENTICATION_ERROR);
         // Sessionにエラー情報があるか確認
-        } elseif ($session->has(SecurityContext::AUTHENTICATION_ERROR)) {
+        } else if ($session->has(SecurityContext::AUTHENTICATION_ERROR)) {
             // Sessionからエラー情報を取得
             $error = $session->get(SecurityContext::AUTHENTICATION_ERROR);
             // 一度表示したらSessionからは削除する
@@ -596,8 +596,7 @@ class ShoppingController extends AbstractController
             ->getForm();
 
         return $app['view']->render('Shopping/login.twig', array(
-//            'error' => $app['security.last_error']($app['request']),
-            'error'         => $error,
+            'error' => $app['security.last_error']($app['request']),
             'form'  => $form->createView(),
         ));
     }

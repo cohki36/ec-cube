@@ -29,40 +29,41 @@ use Symfony\Component\HttpFoundation\Request;
 
 class LayoutController
 {
+    private $isPreview = false;
+
     public function index(Application $app, Request $request, $id = 1)
     {
         $DeviceType = $app['eccube.repository.master.device_type']
             ->find(\Eccube\Entity\Master\DeviceType::DEVICE_TYPE_PC);
 
-        // 一覧表示用
-        $PageLayouts = $app['eccube.repository.page_layout']
-            ->findBy(array(
-                'DeviceType' => $DeviceType,
-            ));
-
         // 編集対象ページ
         /* @var $TargetPageLayout \Eccube\Entity\PageLayout */
         $TargetPageLayout = $app['eccube.repository.page_layout']->get($DeviceType, $id);
-
-        // 未使用ブロックの取得
         $Blocks = $app['orm.em']->getRepository('Eccube\Entity\Block')
             ->findBy(array(
                 'DeviceType' => $DeviceType,
             ));
         $BlockPositions = $TargetPageLayout->getBlockPositions();
-        foreach ($Blocks as $Block) {
-            if (!$BlockPositions->containsKey($Block->getId())) {
-                $UnusedBlockPosition = new \Eccube\Entity\BlockPosition();
-                $UnusedBlockPosition
-                    ->setPageId($id)
-                    ->setTargetId(\Eccube\Entity\PageLayout::TARGET_ID_UNUSED)
-                    ->setAnywhere(0)
-                    ->setBlockRow(0)
-                    ->setBlockId($Block->getId())
-                    ->setBlock($Block)
-                    ->setPageLayout($TargetPageLayout);
-                $TargetPageLayout->addBlockPosition($UnusedBlockPosition);
-            }
+
+
+        $listForm = $app['form.factory']
+            ->createBuilder('admin_page_layout')
+            ->getForm();
+        $listForm->get('layout')->setData($TargetPageLayout);
+
+        // 未使用ブロックの取得
+        $unusedBlocks = $app['eccube.repository.page_layout']->findUnusedBlocks($DeviceType, $id);
+        foreach ($unusedBlocks as $unusedBlock) {
+            $UnusedBlockPosition = new \Eccube\Entity\BlockPosition();
+            $UnusedBlockPosition
+                ->setPageId($id)
+                ->setTargetId(\Eccube\Entity\PageLayout::TARGET_ID_UNUSED)
+                ->setAnywhere(0)
+                ->setBlockRow(0)
+                ->setBlockId($unusedBlock->getId())
+                ->setBlock($unusedBlock)
+                ->setPageLayout($TargetPageLayout);
+            $TargetPageLayout->addBlockPosition($UnusedBlockPosition);
         }
 
         $form = $app['form.factory']
@@ -131,7 +132,11 @@ class LayoutController
                 $app['orm.em']->persist($TargetPageLayout);
                 $app['orm.em']->flush();
 
-                $app->addSuccess('admin.register.complete', 'admin');
+                if ($this->isPreview) {
+                    $app->addSuccess('admin.preview.register.complete', 'admin');
+                } else {
+                    $app->addSuccess('admin.register.complete', 'admin');
+                }
 
                 return $app->redirect($app->url('admin_content_layout_edit', array('id' => $id)));
             }
@@ -140,8 +145,15 @@ class LayoutController
 
         return $app->render('Content/layout.twig', array(
             'form' => $form->createView(),
+            'list_form' => $listForm->createView(),
             'TargetPageLayout' => $TargetPageLayout,
-            'PageLayouts' => $PageLayouts,
         ));
     }
+
+    public function preview(Application $app, Request $request, $id)
+    {
+        $this->isPreview = true;
+        return $this->index($app, $request, 0);
+    }
+
 }

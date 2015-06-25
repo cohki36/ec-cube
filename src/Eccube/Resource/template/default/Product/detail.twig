@@ -21,8 +21,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #}
 {% extends 'default_frame.twig' %}
 
+{% set body_class = 'product_page' %}
+
 {% block javascript %}
-<script type="text/javascript">
+<script>
     eccube.classCategories = {{ Product.class_categories|json_encode|raw }};
 
     // 規格2に選択肢を割り当てる。
@@ -40,6 +42,38 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
     );
     {% endif %}
 </script>
+
+<script>
+$(function(){
+    $('.carousel').slick({
+        infinite: false,
+        speed: 300,
+        prevArrow:'<button type="button" class="slick-prev"><span class="angle-circle"><svg class="cb cb-angle-right"><use xlink:href="#cb-angle-right" /></svg></span></button>',
+        nextArrow:'<button type="button" class="slick-next"><span class="angle-circle"><svg class="cb cb-angle-right"><use xlink:href="#cb-angle-right" /></svg></span></button>',
+        slidesToShow: 4,
+        slidesToScroll: 4,
+        responsive: [
+            {
+                breakpoint: 768,
+                settings: {
+                    slidesToShow: 3,
+                    slidesToScroll: 3
+                }
+            }
+        ]
+    });
+
+    $('.slides').slick({
+        dots: true,
+        arrows: false,
+        speed: 300,
+        customPaging: function(slider, i) {
+            return '<button class="thumbnail">' + $(slider.$slides[i]).find('img').prop('outerHTML') + '</button>';
+        }
+    });
+});
+</script>
+
 {% endblock %}
 
 {% block main %}
@@ -65,10 +99,10 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 <div class="slides">
                     {% if Product.ProductImage|length > 0 %}
                         {% for ProductImage in Product.ProductImage %}
-                        <div><img src="{{ app.config.image_save_urlpath }}{{ ProductImage|no_image_product }}"/></div>
+                        <div><img src="{{ app.config.image_save_urlpath }}/{{ ProductImage|no_image_product }}"/></div>
                         {% endfor %}
                     {% else %}
-                        <div><img src="{{ app.config.image_save_urlpath }}{{ ''|no_image_product }}"/></div>
+                        <div><img src="{{ app.config.image_save_urlpath }}/{{ ''|no_image_product }}"/></div>
                     {% endif %}
                 </div>
             </div>
@@ -80,16 +114,16 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
                 <div class="item_detail">
                     <!--★通常価格★-->
                     {% if Product.hasProductClass -%}
-                        <p class="normal_price"> 通常価格：\ <span class="price01_default">{{ Product.getPrice01IncTaxMin|number_format }}～ \ <span class="price01_default">{{ Product.getPrice01IncTaxMax|number_format }}</span> <span class="small">税込</span></p>
+                        <p class="normal_price"> 通常価格：<span class="price01_default">{{ Product.getPrice01IncTaxMin|price }}</span>～<span class="price01_default">{{ Product.getPrice01IncTaxMax|price }}</span> <span class="small">税込</span></p>
                     {% else -%}
-                        <p class="normal_price"> 通常価格：\ <span class="price01_default">{{ Product.getPrice01IncTaxMin|number_format }}</span> <span class="small">税込</span></p>
+                        <p class="normal_price"> 通常価格：<span class="price01_default">{{ Product.getPrice01IncTaxMin|price }}</span> <span class="small">税込</span></p>
                     {% endif -%}
 
                     <!--★販売価格★-->
                     {% if Product.hasProductClass -%}
-                        <p class="sale_price text-primary"> \ <span class="price02_default">{{ Product.getPrice02IncTaxMin|number_format }}</span> ～ \ <span class="price02_default">{{ Product.getPrice02IncTaxMax|number_format }}</span> <span class="small">税込</span></p>
+                        <p class="sale_price text-primary"> <span class="price02_default">{{ Product.getPrice02IncTaxMin|price }}</span> ～ <span class="price02_default">{{ Product.getPrice02IncTaxMax|price }}</span> <span class="small">税込</span></p>
                     {% else -%}
-                        <p class="sale_price text-primary"> \ <span class="price02_default">{{ Product.getPrice02IncTaxMin|number_format }}</span><span class="small">税込</span></p>
+                        <p class="sale_price text-primary"> <span class="price02_default">{{ Product.getPrice02IncTaxMin|price }}</span><span class="small">税込</span></p>
                     {% endif -%}
 
                     <!--▼商品コード-->
